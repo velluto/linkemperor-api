@@ -2,11 +2,11 @@
 require File.expand_path('../lib/linkemperor-api/version', __FILE__)
 
 Gem::Specification.new do |gem|
-  gem.authors       = ["Giorgenes"]
-  gem.email         = ["giorgenes@gmail.com"]
-  gem.description   = %q{TODO: Write a gem description}
-  gem.summary       = %q{TODO: Write a gem summary}
-  gem.homepage      = ""
+  gem.authors       = ["LinkEmperor"]
+  gem.email         = ["linkemperor@linkemperor.com"]
+  gem.description   = %q{Link Emperor API for Customers and Vendors}
+  gem.summary       = %q{Link Emperor API}
+  gem.homepage      = "http://www.linkemperor.com"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }

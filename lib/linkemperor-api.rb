@@ -1,7 +1,4 @@
 require "linkemperor-api/version"
+require "linkemperor-api/customers"
+require "linkemperor-api/vendors"
 
-module Linkemperor
-  module Api
-    # Your code goes here...
-  end
-end
