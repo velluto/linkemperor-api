@@ -1,4 +1,4 @@
-# Linkemperor::Api
+# Linkemperor API
 
 This library is used to access The Link Emperor API.
 
