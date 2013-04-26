@@ -18,8 +18,6 @@ Or install it yourself as:
 
 ## Usage
 
-### Ruby
-
 Include the gem on your project and use it like this:
 
     require 'linkemperor-api'
@@ -31,21 +29,6 @@ Include the gem on your project and use it like this:
     # Vendors
     api = LinkemperorVendor.new('<api_key>')
     api.desired_method
-
-### PHP
-
-Include the files under the 'php' directory and use it as follow:
-
-    include('customers.php');
-    include('vendors.php');
-  
-    # Customers
-    $api = new LinkemperorCustomer("<api key>");
-    $api->some_method();
-  
-    # Vendors
-    $api = new LinkemperorVendor("<api key>");
-    $api->some_method();
 
 For details on the available operations, check documentation available on
 http://www.linkemperor.com/api-documentation
