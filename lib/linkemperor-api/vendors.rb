@@ -98,6 +98,22 @@ class LinkemperorVendor
   
   end
   
+  # Returns the full details of a Blast.  Make sure to provide a Blast ID.
+  # Parameters:
+  # - id: ID # of the Blast
+  def get_blast_by_id(id)
+    
+    
+    
+    if id.nil?
+      raise LinkemperorApiException.new('id should not be empty')
+    end
+    
+  
+    exec_get("#{@base_path}/api/v2/vendors/blasts/#{id}.json?api_key=#{@api_key}")
+  
+  end
+  
   # Once you've completed link building for a request, you need to submit the URLs where links were built.  This PUT method does that.
   # 
   # After we receive this submission, we will verify the links provided within 24 hours.

@@ -56,6 +56,34 @@ class LinkemperorCustomer
   end
 
   
+  # This method returns a list of all the Articles that exist on your account.
+  # Parameters:
+  #  none
+  def get_articles()
+    
+    
+    
+  
+    exec_get("#{@base_path}/api/v2/customers/articles.json?api_key=#{@api_key}")
+  
+  end
+  
+  # This method returns details about the Article you specify.
+  # Parameters:
+  # - id: Article ID
+  def get_articles_by_id(id)
+    
+    
+    
+    if id.nil?
+      raise LinkemperorApiException.new('id should not be empty')
+    end
+    
+  
+    exec_get("#{@base_path}/api/v2/customers/articles/#{id}.json?api_key=#{@api_key}")
+  
+  end
+  
   # This method creates a new Article.
   # Parameters:
   # - campaign_id: Campaign ID for this Article
@@ -160,28 +188,22 @@ class LinkemperorCustomer
   
   end
   
-  # This method creates a new campaign.  Remember that if you exceed your plan limit on Campaigns, there may be additional charges.
+  # This method returns a list of all the Campagins that exist on your account.
   # Parameters:
-  # - name: Name of the Campaign.
-  # - notes: Notes
-  def create_campaign(name, notes = nil)
+  #  none
+  def get_campaigns()
     
     
-    
-    if name.nil?
-      raise LinkemperorApiException.new('name should not be empty')
-    end
     
   
-    parameters = {'campaign' => {'name' => name, 'notes' => notes}}
-    exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/campaigns.json?api_key=#{@api_key}")
+    exec_get("#{@base_path}/api/v2/customers/campaigns.json?api_key=#{@api_key}")
   
   end
   
-  # This method deletes the Campaign you specify.
+  # This method returns details about the campaign you specify.
   # Parameters:
   # - id: Campaign ID
-  def delete_campaign(id)
+  def get_campaign_by_id(id)
     
     
     
@@ -190,8 +212,7 @@ class LinkemperorCustomer
     end
     
   
-    parameters = {}
-    exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
+    exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
   
   end
   
@@ -240,6 +261,41 @@ class LinkemperorCustomer
     
   
     exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/trouble_spots.json?api_key=#{@api_key}")
+  
+  end
+  
+  # This method creates a new campaign.  Remember that if you exceed your plan limit on Campaigns, there may be additional charges.
+  # Parameters:
+  # - name: Name of the Campaign.
+  # - notes: Notes
+  def create_campaign(name, notes = nil)
+    
+    
+    
+    if name.nil?
+      raise LinkemperorApiException.new('name should not be empty')
+    end
+    
+  
+    parameters = {'campaign' => {'name' => name, 'notes' => notes}}
+    exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/campaigns.json?api_key=#{@api_key}")
+  
+  end
+  
+  # This method deletes the Campaign you specify.
+  # Parameters:
+  # - id: Campaign ID
+  def delete_campaign(id)
+    
+    
+    
+    if id.nil?
+      raise LinkemperorApiException.new('id should not be empty')
+    end
+    
+  
+    parameters = {}
+    exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
   
   end
   
@@ -312,6 +368,34 @@ class LinkemperorCustomer
   
   end
   
+  # This method returns a list of all the Sites that exist on your account.
+  # Parameters:
+  #  none
+  def get_sites()
+    
+    
+    
+  
+    exec_get("#{@base_path}/api/v2/customers/sites.json?api_key=#{@api_key}")
+  
+  end
+  
+  # This method returns details about the Site you specify.
+  # Parameters:
+  # - id: Site ID
+  def get_site_by_id(id)
+    
+    
+    
+    if id.nil?
+      raise LinkemperorApiException.new('id should not be empty')
+    end
+    
+  
+    exec_get("#{@base_path}/api/v2/customers/sites/#{id}.json?api_key=#{@api_key}")
+  
+  end
+  
   # This method creates a new Site.
   # Parameters:
   # - campaign_id: Campaign ID for this Site
@@ -357,6 +441,34 @@ class LinkemperorCustomer
   
   end
   
+  # This method returns a list of all the Targets that exist on your account (across all Campaigns).
+  # Parameters:
+  #  none
+  def get_targets()
+    
+    
+    
+  
+    exec_get("#{@base_path}/api/v2/customers/targets.json?api_key=#{@api_key}")
+  
+  end
+  
+  # This method returns details about the Target you specify.
+  # Parameters:
+  # - id: Target ID
+  def get_target_by_id(id)
+    
+    
+    
+    if id.nil?
+      raise LinkemperorApiException.new('id should not be empty')
+    end
+    
+  
+    exec_get("#{@base_path}/api/v2/customers/targets/#{id}.json?api_key=#{@api_key}")
+  
+  end
+  
   # This method creates a new Target.  You will need to provide a Campaign ID and a URL for the target.
   # Parameters:
   # - campaign_id: Campaign ID
@@ -394,6 +506,35 @@ class LinkemperorCustomer
   
     parameters = {}
     exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/targets/#{id}.json?api_key=#{@api_key}")
+  
+  end
+  
+  # This method returns a list of all the Keywords that exist on your account.  You can optionally limit the list to those keywords that belong to a specific campaign or target.
+  # Parameters:
+  # - target_id: Limit keywords to those belonging to this target.
+  # - campaign_id: Limit keywords to those belonging to this campaign.
+  def get_target_keywords(target_id = nil, campaign_id = nil)
+    
+    
+    
+  
+    exec_get("#{@base_path}/api/v2/customers/target_keywords.json?api_key=#{@api_key}")
+  
+  end
+  
+  # This method returns details about the Keyword you specify.
+  # Parameters:
+  # - id: Keyword ID
+  def get_target_keyword_by_id(id)
+    
+    
+    
+    if id.nil?
+      raise LinkemperorApiException.new('id should not be empty')
+    end
+    
+  
+    exec_get("#{@base_path}/api/v2/customers/target_keywords/#{id}.json?api_key=#{@api_key}")
   
   end
   
