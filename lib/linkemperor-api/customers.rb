@@ -220,12 +220,13 @@ class LinkemperorCustomer
   # - how_pay: How to pay for the Order. 'cash' to generate an invoice that will be settled against your account on file, or 'credits' to pull from the pool of existing credits in your account.
   # - callback_url: The URL to notify when the status of the Order is updated. This occurs when component Blasts either succeed (and URLs are available for viewing) or fail (and replacement Blasts have been ordered.)
   # - custom: You may provide any string here. We will save it as part of the Order and include it in the returned data whenever you check on an Order's status. It's great for holding your internal ID number for the Order.
+  # - special_requirements: Special requirements
   # - requests: This is where the actual object describing your order goes.  This is either a JSON nested array or XML nested tags (depending on your current format).  The schema for this field is described below in the section titled Schema Used In Your Request.
-  def create_order(requests, how_pay = nil, callback_url = nil, custom = nil)
+  def create_order(requests, how_pay = nil, callback_url = nil, custom = nil, special_requirements = nil)
     if requests.nil?
       raise LinkemperorApiException.new('requests should not be empty')
     end
-    parameters = {'order' => {'how_pay' => how_pay, 'callback_url' => callback_url, 'custom' => custom, 'requests' => requests}}
+    parameters = {'order' => {'how_pay' => how_pay, 'callback_url' => callback_url, 'custom' => custom, 'special_requirements' => special_requirements, 'requests' => requests}}
     exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/orders.json?api_key=#{@api_key}")
   end
 

@@ -1,3 +1,4 @@
+
 require 'net/http'
 require 'uri'
 require 'json'
@@ -97,6 +98,9 @@ class LinkemperorVendor
   # After we receive this submission, we will verify the links provided within 24 hours.
   # Once the links prove to be valid, we will credit your account immediately. If we cannot
   # find enough valid backlinks in the links that you provided, we will suspend payment pending a manual review.
+  # 
+  # If you are required to provide login information for the built urls,
+  # provide it in the url itself using the following format: http://user:password@domain.com/path
   # Parameters:
   # - id: ID # of the Blast
   # - links: A string containing the list of links to submit (newline delimited)
@@ -144,6 +148,8 @@ class LinkemperorVendor
   # Creates a test blast for your Service.  It will not affect your score or marketplace rank.  However, if you submit URLs that fail to pass our link checker, they will be reflected in the failed_domains method of the API.
   # 
   # This is particularly useful for testing new URL lists or potential link sources.
+  # 
+  # Please notice that blasts created this way won't show up in the /blasts or /next queues.
   # Parameters:
   # - id: ID # of the Service
   def create_test_blast(id)
