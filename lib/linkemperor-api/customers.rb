@@ -11,32 +11,44 @@ class LinkemperorCustomer
     @api_key = api_key
   end
 
+  def http
+    return @http if @http
+    uri = URI(@base_path)
+    @http = Net::HTTP.new(uri.host, uri.port)
+  end
+
+  def do_http(request)
+    http.read_timeout = 240
+    request['accept-encoding'] = ""
+    request['Connection'] = ""
+    http.request(request)
+  end
+
+  def raise_error(result)
+    raise LinkemperorApiException.new("#{result.code}: #{result.message}")
+  end
+
   def exec_get(uri)
-    uri = URI(uri)
-    result = Net::HTTP.get_response(uri)
+    result = do_http(Net::HTTP::Get.new(uri))
     if result.is_a?(Net::HTTPSuccess)
       JSON.parse(result.body)
     else
-      raise LinkemperorApiException.new result.body
+      raise_error(result)
     end
   end
 
   def exec_post(parameters, method, uri)
-    uri = URI(uri)
     req = case method
             when 'put'
-              Net::HTTP::Put.new(uri.request_uri)
+              Net::HTTP::Put.new(uri)
             when 'post'
-              Net::HTTP::Post.new(uri.request_uri)
+              Net::HTTP::Post.new(uri)
             when 'delete'
-              Net::HTTP::Delete.new(uri.request_uri)
+              Net::HTTP::Delete.new(uri)
             end
     req.body = JSON.dump(parameters)
     req.content_type = "application/json"
-    result = Net::HTTP.start(uri.hostname, uri.port) do |http|
-      http.request(req)
-    end
-    #result = Net::HTTP.post_form(uri, converted_params)
+    result = do_http(req)
     if result.is_a?(Net::HTTPSuccess)
       if result.body == 'false'
         false
@@ -50,7 +62,7 @@ class LinkemperorCustomer
         end
       end
     else
-      raise LinkemperorApiException.new result.body
+      raise_error(result)
     end
   end
 
@@ -59,7 +71,7 @@ class LinkemperorCustomer
   # Parameters:
   #  none
   def get_articles()
-    exec_get("#{@base_path}/api/v2/customers/articles.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/articles.json?api_key=#{@api_key}")
   end
 
   # This method returns details about the Article you specify.
@@ -69,7 +81,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/articles/#{id}.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/articles/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method creates a new Article.
@@ -90,7 +102,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('body should not be empty')
     end
     parameters = {'article' => {'campaign_id' => campaign_id, 'title' => title, 'body' => body}}
-    exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/articles.json?api_key=#{@api_key}")
+    exec_post(parameters, 'post', "/api/v2/customers/articles.json?api_key=#{@api_key}")
   end
 
   # This method deletes the Article you specify.
@@ -101,7 +113,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('id should not be empty')
     end
     parameters = {}
-    exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/articles/#{id}.json?api_key=#{@api_key}")
+    exec_post(parameters, 'delete', "/api/v2/customers/articles/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of Articles for the Campaign.
@@ -111,14 +123,14 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/articles.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/campaigns/#{id}/articles.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of all the Blasts that exist on your account.
   # Parameters:
   #  none
   def get_blasts()
-    exec_get("#{@base_path}/api/v2/customers/blasts.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/blasts.json?api_key=#{@api_key}")
   end
 
   # This method returns a details about the Blast you specify
@@ -128,7 +140,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/blasts/#{id}.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/blasts/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of the Blasts in the Campaign.
@@ -138,14 +150,14 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/blasts.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/campaigns/#{id}/blasts.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of all the Campagins that exist on your account.
   # Parameters:
   #  none
   def get_campaigns()
-    exec_get("#{@base_path}/api/v2/customers/campaigns.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/campaigns.json?api_key=#{@api_key}")
   end
 
   # This method returns details about the campaign you specify.
@@ -155,7 +167,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of the Sites in the Campaign.
@@ -165,7 +177,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/sites.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/campaigns/#{id}/sites.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of the Targets in the Campaign.
@@ -175,7 +187,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/targets.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/campaigns/#{id}/targets.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of Trouble Spots for the Campaign.
@@ -185,7 +197,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/trouble_spots.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/campaigns/#{id}/trouble_spots.json?api_key=#{@api_key}")
   end
 
   # This method creates a new campaign.  Remember that if you exceed your plan limit on Campaigns, there may be additional charges.
@@ -197,7 +209,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('name should not be empty')
     end
     parameters = {'campaign' => {'name' => name, 'notes' => notes}}
-    exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/campaigns.json?api_key=#{@api_key}")
+    exec_post(parameters, 'post', "/api/v2/customers/campaigns.json?api_key=#{@api_key}")
   end
 
   # This method deletes the Campaign you specify.
@@ -208,7 +220,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('id should not be empty')
     end
     parameters = {}
-    exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
+    exec_post(parameters, 'delete', "/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method is used to purchase link building.<br /><br />
@@ -227,7 +239,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('requests should not be empty')
     end
     parameters = {'order' => {'how_pay' => how_pay, 'callback_url' => callback_url, 'custom' => custom, 'special_requirements' => special_requirements, 'requests' => requests}}
-    exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/orders.json?api_key=#{@api_key}")
+    exec_post(parameters, 'post', "/api/v2/customers/orders.json?api_key=#{@api_key}")
   end
 
   # This method shows the details of an Order and its component Blasts.<be /><be />
@@ -238,7 +250,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/orders/#{id}.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/orders/#{id}.json?api_key=#{@api_key}")
   end
 
   # If you're going to order link building, you need to check which Services are currently available.<br /><br />
@@ -248,7 +260,7 @@ class LinkemperorCustomer
   # Parameters:
   #  none
   def get_services()
-    exec_get("#{@base_path}/api/v2/customers/services.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/services.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of the currently available Services that
@@ -256,14 +268,14 @@ class LinkemperorCustomer
   # Parameters:
   #  none
   def get_safe_services()
-    exec_get("#{@base_path}/api/v2/customers/services/safe.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/services/safe.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of all the Sites that exist on your account.
   # Parameters:
   #  none
   def get_sites()
-    exec_get("#{@base_path}/api/v2/customers/sites.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/sites.json?api_key=#{@api_key}")
   end
 
   # This method returns details about the Site you specify.
@@ -273,7 +285,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/sites/#{id}.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/sites/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method creates a new Site.
@@ -295,7 +307,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('domain_name should not be empty')
     end
     parameters = {'site' => {'campaign_id' => campaign_id, 'name' => name, 'domain_name' => domain_name, 'rss_feed' => rss_feed}}
-    exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/sites.json?api_key=#{@api_key}")
+    exec_post(parameters, 'post', "/api/v2/customers/sites.json?api_key=#{@api_key}")
   end
 
   # This method deletes the Site you specify.
@@ -306,14 +318,14 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('id should not be empty')
     end
     parameters = {}
-    exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/sites/#{id}.json?api_key=#{@api_key}")
+    exec_post(parameters, 'delete', "/api/v2/customers/sites/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of all the Targets that exist on your account (across all Campaigns).
   # Parameters:
   #  none
   def get_targets()
-    exec_get("#{@base_path}/api/v2/customers/targets.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/targets.json?api_key=#{@api_key}")
   end
 
   # This method returns details about the Target you specify.
@@ -323,7 +335,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/targets/#{id}.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/targets/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method creates a new Target.  You will need to provide a Campaign ID and a URL for the target.
@@ -340,7 +352,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('url_input should not be empty')
     end
     parameters = {'target' => {'campaign_id' => campaign_id, 'url_input' => url_input, 'keyword_input' => keyword_input}}
-    exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/targets.json?api_key=#{@api_key}")
+    exec_post(parameters, 'post', "/api/v2/customers/targets.json?api_key=#{@api_key}")
   end
 
   # This method deletes the Target you specify.
@@ -351,7 +363,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('id should not be empty')
     end
     parameters = {}
-    exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/targets/#{id}.json?api_key=#{@api_key}")
+    exec_post(parameters, 'delete', "/api/v2/customers/targets/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of all the Keywords that exist on your account.  You can optionally limit the list to those keywords that belong to a specific campaign or target.
@@ -359,7 +371,7 @@ class LinkemperorCustomer
   # - target_id: Limit keywords to those belonging to this target.
   # - campaign_id: Limit keywords to those belonging to this campaign.
   def get_target_keywords(target_id = nil, campaign_id = nil)
-    exec_get("#{@base_path}/api/v2/customers/target_keywords.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/target_keywords.json?api_key=#{@api_key}")
   end
 
   # This method returns details about the Keyword you specify.
@@ -369,7 +381,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/target_keywords/#{id}.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/target_keywords/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method creates a new Keyword.  You will need to provide a Target ID.
@@ -385,7 +397,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('keyword_string should not be empty')
     end
     parameters = {'target_keyword' => {'target_id' => target_id, 'keyword_string' => keyword_string}}
-    exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/target_keywords.json?api_key=#{@api_key}")
+    exec_post(parameters, 'post', "/api/v2/customers/target_keywords.json?api_key=#{@api_key}")
   end
 
   # This method deletes the Keyword you specify.
@@ -396,7 +408,7 @@ class LinkemperorCustomer
       raise LinkemperorApiException.new('id should not be empty')
     end
     parameters = {}
-    exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/target_keywords/#{id}.json?api_key=#{@api_key}")
+    exec_post(parameters, 'delete', "/api/v2/customers/target_keywords/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method returns a list of all the Trouble Spots that exist on your account.
@@ -405,7 +417,7 @@ class LinkemperorCustomer
   # Parameters:
   #  none
   def get_trouble_spots()
-    exec_get("#{@base_path}/api/v2/customers/trouble_spots.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/trouble_spots.json?api_key=#{@api_key}")
   end
 
   # This method returns details about the Trouble Spot you specify.
@@ -415,7 +427,7 @@ class LinkemperorCustomer
     if id.nil?
       raise LinkemperorApiException.new('id should not be empty')
     end
-    exec_get("#{@base_path}/api/v2/customers/trouble_spots/#{id}.json?api_key=#{@api_key}")
+    exec_get("/api/v2/customers/trouble_spots/#{id}.json?api_key=#{@api_key}")
   end
 
 end
