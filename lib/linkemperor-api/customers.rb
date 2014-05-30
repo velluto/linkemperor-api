@@ -23,7 +23,6 @@ class LinkemperorCustomer
   end
 
   def exec_post(parameters, method, uri)
-    puts "LEAPI:: uri: #{uri}, params: #{parameters.inspect}"
     uri = URI(uri)
     req = case method
             when 'put'
