@@ -1,9 +1,10 @@
+
 require 'net/http'
 require 'uri'
 require 'json'
 
 class LinkemperorCustomer
-  class LinkemperorApiException < RuntimeError
+  class LinkemperorCustomerException < RuntimeError
   end
 
   def initialize(api_key, base_path = nil)
@@ -17,7 +18,7 @@ class LinkemperorCustomer
     if result.is_a?(Net::HTTPSuccess)
       JSON.parse(result.body)
     else
-      raise LinkemperorApiException.new result.body
+      raise LinkemperorCustomerException.new result.body
     end
   end
 
@@ -50,7 +51,7 @@ class LinkemperorCustomer
         end
       end
     else
-      raise LinkemperorApiException.new result.body
+      raise LinkemperorCustomerException.new result.body
     end
   end
 
@@ -67,7 +68,7 @@ class LinkemperorCustomer
   # - id: Article ID
   def get_articles_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/articles/#{id}.json?api_key=#{@api_key}")
   end
@@ -79,15 +80,15 @@ class LinkemperorCustomer
   # - body: Article Body (Spintax OK)
   def create_article(campaign_id, title, body)
     if campaign_id.nil?
-      raise LinkemperorApiException.new('campaign_id should not be empty')
+      raise LinkemperorCustomerException.new('campaign_id should not be empty')
     end
 
     if title.nil?
-      raise LinkemperorApiException.new('title should not be empty')
+      raise LinkemperorCustomerException.new('title should not be empty')
     end
 
     if body.nil?
-      raise LinkemperorApiException.new('body should not be empty')
+      raise LinkemperorCustomerException.new('body should not be empty')
     end
     parameters = {'article' => {'campaign_id' => campaign_id, 'title' => title, 'body' => body}}
     exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/articles.json?api_key=#{@api_key}")
@@ -98,7 +99,7 @@ class LinkemperorCustomer
   # - id: Article ID
   def delete_article(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     parameters = {}
     exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/articles/#{id}.json?api_key=#{@api_key}")
@@ -109,7 +110,7 @@ class LinkemperorCustomer
   # - id: Campaign ID
   def get_campaign_articles(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/articles.json?api_key=#{@api_key}")
   end
@@ -126,7 +127,7 @@ class LinkemperorCustomer
   # - id: Blast ID
   def get_blast_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/blasts/#{id}.json?api_key=#{@api_key}")
   end
@@ -136,7 +137,7 @@ class LinkemperorCustomer
   # - id: Campaign ID
   def get_campaign_blasts(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/blasts.json?api_key=#{@api_key}")
   end
@@ -153,7 +154,7 @@ class LinkemperorCustomer
   # - id: Campaign ID
   def get_campaign_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
   end
@@ -163,7 +164,7 @@ class LinkemperorCustomer
   # - id: Campaign ID
   def get_campaign_sites(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/sites.json?api_key=#{@api_key}")
   end
@@ -173,7 +174,7 @@ class LinkemperorCustomer
   # - id: Campaign ID
   def get_campaign_targets(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/targets.json?api_key=#{@api_key}")
   end
@@ -183,21 +184,44 @@ class LinkemperorCustomer
   # - id: Campaign ID
   def get_campaign_trouble_spots(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/campaigns/#{id}/trouble_spots.json?api_key=#{@api_key}")
   end
 
   # This method creates a new campaign.  Remember that if you exceed your plan limit on Campaigns, there may be additional charges.
+  # 
+  # If you allocate more total blasts than you have available, we will automatically upgrade your plan so that every campaign has at least one daily blast assigned.
   # Parameters:
   # - name: Name of the Campaign.
   # - notes: Notes
-  def create_campaign(name, notes = nil)
+  # - active: Is the campaign active?
+  # - assigned_blasts_per_day: Blasts per day
+  # - default_target_keyword_value: Default target keyword value.  Valid options are: calculated (default), equal, or zero
+  # - visit_value: Per visit value
+  def create_campaign(name, notes = nil, active = nil, assigned_blasts_per_day = nil, default_target_keyword_value = nil, visit_value = nil)
     if name.nil?
-      raise LinkemperorApiException.new('name should not be empty')
+      raise LinkemperorCustomerException.new('name should not be empty')
     end
-    parameters = {'campaign' => {'name' => name, 'notes' => notes}}
+    parameters = {'campaign' => {'name' => name, 'notes' => notes, 'active' => active, 'assigned_blasts_per_day' => assigned_blasts_per_day, 'default_target_keyword_value' => default_target_keyword_value, 'visit_value' => visit_value}}
     exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/campaigns.json?api_key=#{@api_key}")
+  end
+
+  # This method updates an existing Campaign.
+  # Parameters:
+  # - id: ID # of the Campaign
+  # - name: Name of the Campaign.
+  # - notes: Notes
+  # - active: Is the campaign active?
+  # - assigned_blasts_per_day: Blasts per day
+  # - default_target_keyword_value: Default target keyword value.  Valid options are: calculated (default), equal, or zero
+  # - visit_value: Per visit value
+  def update_campaign(id, name = nil, notes = nil, active = nil, assigned_blasts_per_day = nil, default_target_keyword_value = nil, visit_value = nil)
+    if id.nil?
+      raise LinkemperorCustomerException.new('id should not be empty')
+    end
+    parameters = {'campaign' => {'name' => name, 'notes' => notes, 'active' => active, 'assigned_blasts_per_day' => assigned_blasts_per_day, 'default_target_keyword_value' => default_target_keyword_value, 'visit_value' => visit_value}}
+    exec_post(parameters, 'put', "#{@base_path}/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method deletes the Campaign you specify.
@@ -205,10 +229,18 @@ class LinkemperorCustomer
   # - id: Campaign ID
   def delete_campaign(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     parameters = {}
     exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/campaigns/#{id}.json?api_key=#{@api_key}")
+  end
+
+  # This method reallocates your linkbuilding percentages equally between all active campaigns.
+  # Parameters:
+  #  none
+  def linkbuilding_reallocate_equally()
+    parameters = {}
+    exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/linkbuilding/reallocate_equally.json?api_key=#{@api_key}")
   end
 
   # This method is used to purchase link building.<br /><br />
@@ -217,16 +249,15 @@ class LinkemperorCustomer
   # Now let's talk about building the actual order.  An OrderRequest specifies the Services to order and the Targets (URL/anchor text) to build links to.  Each Order can have multiple OrderRequests.<br /><br />
   # You can see a sample OrderRequest (in JSON) by clicking "Model Schema" under the "Schema Used In Your Request" section just below.
   # Parameters:
-  # - how_pay: How to pay for the Order. 'cash' to generate an invoice that will be settled against your account on file, or 'credits' to pull from the pool of existing credits in your account.
   # - callback_url: The URL to notify when the status of the Order is updated. This occurs when component Blasts either succeed (and URLs are available for viewing) or fail (and replacement Blasts have been ordered.)
   # - custom: You may provide any string here. We will save it as part of the Order and include it in the returned data whenever you check on an Order's status. It's great for holding your internal ID number for the Order.
   # - special_requirements: Special requirements
   # - requests: This is where the actual object describing your order goes.  This is either a JSON nested array or XML nested tags (depending on your current format).  The schema for this field is described below in the section titled Schema Used In Your Request.
-  def create_order(requests, how_pay = nil, callback_url = nil, custom = nil, special_requirements = nil)
+  def create_order(requests, callback_url = nil, custom = nil, special_requirements = nil)
     if requests.nil?
-      raise LinkemperorApiException.new('requests should not be empty')
+      raise LinkemperorCustomerException.new('requests should not be empty')
     end
-    parameters = {'order' => {'how_pay' => how_pay, 'callback_url' => callback_url, 'custom' => custom, 'special_requirements' => special_requirements, 'requests' => requests}}
+    parameters = {'order' => {'callback_url' => callback_url, 'custom' => custom, 'special_requirements' => special_requirements, 'requests' => requests}}
     exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/orders.json?api_key=#{@api_key}")
   end
 
@@ -236,7 +267,7 @@ class LinkemperorCustomer
   # - id: ID # of the Order
   def get_order_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/orders/#{id}.json?api_key=#{@api_key}")
   end
@@ -271,7 +302,7 @@ class LinkemperorCustomer
   # - id: Site ID
   def get_site_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/sites/#{id}.json?api_key=#{@api_key}")
   end
@@ -284,15 +315,15 @@ class LinkemperorCustomer
   # - rss_feed: RSS Feed for this Site
   def create_site(campaign_id, name, domain_name, rss_feed = nil)
     if campaign_id.nil?
-      raise LinkemperorApiException.new('campaign_id should not be empty')
+      raise LinkemperorCustomerException.new('campaign_id should not be empty')
     end
 
     if name.nil?
-      raise LinkemperorApiException.new('name should not be empty')
+      raise LinkemperorCustomerException.new('name should not be empty')
     end
 
     if domain_name.nil?
-      raise LinkemperorApiException.new('domain_name should not be empty')
+      raise LinkemperorCustomerException.new('domain_name should not be empty')
     end
     parameters = {'site' => {'campaign_id' => campaign_id, 'name' => name, 'domain_name' => domain_name, 'rss_feed' => rss_feed}}
     exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/sites.json?api_key=#{@api_key}")
@@ -303,7 +334,7 @@ class LinkemperorCustomer
   # - id: Site ID
   def delete_site(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     parameters = {}
     exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/sites/#{id}.json?api_key=#{@api_key}")
@@ -321,7 +352,7 @@ class LinkemperorCustomer
   # - id: Target ID
   def get_target_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/targets/#{id}.json?api_key=#{@api_key}")
   end
@@ -331,16 +362,29 @@ class LinkemperorCustomer
   # - campaign_id: Campaign ID
   # - url_input: Fully qualified URL for the target.
   # - keyword_input: Keywords to add to the target.  Separate multiple keywords with linebreaks.
-  def create_target(campaign_id, url_input, keyword_input = nil)
+  # - visit_value: Value of a visit to this target.
+  def create_target(campaign_id, url_input, keyword_input = nil, visit_value = nil)
     if campaign_id.nil?
-      raise LinkemperorApiException.new('campaign_id should not be empty')
+      raise LinkemperorCustomerException.new('campaign_id should not be empty')
     end
 
     if url_input.nil?
-      raise LinkemperorApiException.new('url_input should not be empty')
+      raise LinkemperorCustomerException.new('url_input should not be empty')
     end
-    parameters = {'target' => {'campaign_id' => campaign_id, 'url_input' => url_input, 'keyword_input' => keyword_input}}
+    parameters = {'target' => {'campaign_id' => campaign_id, 'url_input' => url_input, 'keyword_input' => keyword_input, 'visit_value' => visit_value}}
     exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/targets.json?api_key=#{@api_key}")
+  end
+
+  # This method updates an existing Target.
+  # Parameters:
+  # - id: ID # of the Target
+  # - visit_value: Value of a visit to this target.
+  def update_target(id, visit_value = nil)
+    if id.nil?
+      raise LinkemperorCustomerException.new('id should not be empty')
+    end
+    parameters = {'target' => {'visit_value' => visit_value}}
+    exec_post(parameters, 'put', "#{@base_path}/api/v2/customers/targets/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method deletes the Target you specify.
@@ -348,7 +392,7 @@ class LinkemperorCustomer
   # - id: Target ID
   def delete_target(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     parameters = {}
     exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/targets/#{id}.json?api_key=#{@api_key}")
@@ -367,7 +411,7 @@ class LinkemperorCustomer
   # - id: Keyword ID
   def get_target_keyword_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/target_keywords/#{id}.json?api_key=#{@api_key}")
   end
@@ -378,14 +422,26 @@ class LinkemperorCustomer
   # - keyword_string: Keyword string
   def create_target_keyword(target_id, keyword_string)
     if target_id.nil?
-      raise LinkemperorApiException.new('target_id should not be empty')
+      raise LinkemperorCustomerException.new('target_id should not be empty')
     end
 
     if keyword_string.nil?
-      raise LinkemperorApiException.new('keyword_string should not be empty')
+      raise LinkemperorCustomerException.new('keyword_string should not be empty')
     end
     parameters = {'target_keyword' => {'target_id' => target_id, 'keyword_string' => keyword_string}}
     exec_post(parameters, 'post', "#{@base_path}/api/v2/customers/target_keywords.json?api_key=#{@api_key}")
+  end
+
+  # This method updates an existing TargetKeyword.
+  # Parameters:
+  # - id: ID # of the TargetKeyword
+  # - value: Value of a visit to this TargetKeyword.
+  def update_target(id, value = nil)
+    if id.nil?
+      raise LinkemperorCustomerException.new('id should not be empty')
+    end
+    parameters = {'target_keyword' => {'value' => value}}
+    exec_post(parameters, 'put', "#{@base_path}/api/v2/customers/target_keywords/#{id}.json?api_key=#{@api_key}")
   end
 
   # This method deletes the Keyword you specify.
@@ -393,7 +449,7 @@ class LinkemperorCustomer
   # - id: Keyword ID
   def delete_target_keyword(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     parameters = {}
     exec_post(parameters, 'delete', "#{@base_path}/api/v2/customers/target_keywords/#{id}.json?api_key=#{@api_key}")
@@ -413,9 +469,16 @@ class LinkemperorCustomer
   # - id: TroubleSpot ID
   def get_trouble_spot_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorCustomerException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/customers/trouble_spots/#{id}.json?api_key=#{@api_key}")
+  end
+
+  # This endpoint is no longer used.
+  # Parameters:
+  #  none
+  def info_blast_credit_balance()
+    exec_get("#{@base_path}/api/v2/customers/info/blast_credit_balance.json?api_key=#{@api_key}")
   end
 
 end

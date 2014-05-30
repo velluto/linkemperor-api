@@ -4,7 +4,7 @@ require 'uri'
 require 'json'
 
 class LinkemperorVendor
-  class LinkemperorApiException < RuntimeError
+  class LinkemperorVendorException < RuntimeError
   end
 
   def initialize(api_key, base_path = nil)
@@ -18,7 +18,7 @@ class LinkemperorVendor
     if result.is_a?(Net::HTTPSuccess)
       JSON.parse(result.body)
     else
-      raise LinkemperorApiException.new result.body
+      raise LinkemperorVendorException.new result.body
     end
   end
 
@@ -51,7 +51,7 @@ class LinkemperorVendor
         end
       end
     else
-      raise LinkemperorApiException.new result.body
+      raise LinkemperorVendorException.new result.body
     end
   end
 
@@ -88,7 +88,7 @@ class LinkemperorVendor
   # - id: ID # of the Blast
   def get_blast_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorVendorException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/vendors/blasts/#{id}.json?api_key=#{@api_key}")
   end
@@ -101,16 +101,21 @@ class LinkemperorVendor
   # 
   # If you are required to provide login information for the built urls,
   # provide it in the url itself using the following format: http://user:password@domain.com/path
+  # 
+  # This endpoint can be a little hard to implement, so make sure your JSON payload looks something like this one.  If you're using
+  # XML, then you'll need to modify accordingly.
+  # 
+  # { "blast": { "links": ["http://foo.com", "http://bar.com"] } }
   # Parameters:
   # - id: ID # of the Blast
-  # - links: A string containing the list of links to submit (newline delimited)
+  # - links: A string containing the list of links to submit (newline delimited) OR an array of links.
   def submit_built_link(id, links)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorVendorException.new('id should not be empty')
     end
 
     if links.nil?
-      raise LinkemperorApiException.new('links should not be empty')
+      raise LinkemperorVendorException.new('links should not be empty')
     end
     parameters = {'blast' => {'links' => links}}
     exec_post(parameters, 'put', "#{@base_path}/api/v2/vendors/blasts/#{id}.json?api_key=#{@api_key}")
@@ -128,7 +133,7 @@ class LinkemperorVendor
   # - id: ID # of the Service
   def get_service_by_id(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorVendorException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/vendors/services/#{id}.json?api_key=#{@api_key}")
   end
@@ -140,9 +145,29 @@ class LinkemperorVendor
   # - id: ID # of the Service
   def get_failed_domains(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorVendorException.new('id should not be empty')
     end
     exec_get("#{@base_path}/api/v2/vendors/services/#{id}/failed_domains.json?api_key=#{@api_key}")
+  end
+
+  # Pause a currently active service.
+  # Parameters:
+  # - id: ID # of the Service
+  def pause_running_service(id)
+    if id.nil?
+      raise LinkemperorVendorException.new('id should not be empty')
+    end
+    exec_get("#{@base_path}/api/v2/vendors/services/#{id}/pause.json?api_key=#{@api_key}")
+  end
+
+  # Resume a currently paused service.
+  # Parameters:
+  # - id: ID # of the Service
+  def resume_paused_service(id)
+    if id.nil?
+      raise LinkemperorVendorException.new('id should not be empty')
+    end
+    exec_get("#{@base_path}/api/v2/vendors/services/#{id}/run.json?api_key=#{@api_key}")
   end
 
   # Creates a test blast for your Service.  It will not affect your score or marketplace rank.  However, if you submit URLs that fail to pass our link checker, they will be reflected in the failed_domains method of the API.
@@ -154,7 +179,7 @@ class LinkemperorVendor
   # - id: ID # of the Service
   def create_test_blast(id)
     if id.nil?
-      raise LinkemperorApiException.new('id should not be empty')
+      raise LinkemperorVendorException.new('id should not be empty')
     end
     parameters = {}
     exec_post(parameters, 'post', "#{@base_path}/api/v2/vendors/services/#{id}/test_blast.json?api_key=#{@api_key}")
